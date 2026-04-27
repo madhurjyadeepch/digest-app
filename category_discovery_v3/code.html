@@ -1,0 +1,205 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            colors: {
+              "surface-bright": "#2c2c2d",
+              "on-primary-container": "#4e0006",
+              "inverse-on-surface": "#565556",
+              "secondary-fixed-dim": "#00efce",
+              "primary-dim": "#ff716b",
+              "surface": "#0e0e0f",
+              "tertiary-container": "#f9cc61",
+              "inverse-primary": "#bb1824",
+              "primary-fixed": "#ff7670",
+              "on-secondary-fixed-variant": "#006859",
+              "secondary-dim": "#00efce",
+              "primary": "#ff8d87",
+              "on-background": "#ffffff",
+              "surface-variant": "#262627",
+              "surface-dim": "#0e0e0f",
+              "surface-container": "#1a191b",
+              "on-error": "#450900",
+              "error": "#ff7351",
+              "inverse-surface": "#fcf8f9",
+              "on-surface-variant": "#adaaab",
+              "surface-container-low": "#131314",
+              "on-tertiary-container": "#5b4400",
+              "outline-variant": "#484849",
+              "primary-fixed-dim": "#ff5a57",
+              "tertiary-fixed": "#f9cc61",
+              "error-container": "#b92902",
+              "outline": "#767576",
+              "secondary-container": "#006b5b",
+              "on-primary": "#65000a",
+              "primary-container": "#ff7670",
+              "on-error-container": "#ffd2c8",
+              "tertiary": "#ffdb8f",
+              "on-primary-fixed": "#000000",
+              "secondary": "#26fedc",
+              "on-secondary-fixed": "#00483d",
+              "on-tertiary": "#664c00",
+              "on-tertiary-fixed-variant": "#674d00",
+              "surface-container-high": "#201f21",
+              "tertiary-dim": "#eabe55",
+              "surface-container-highest": "#262627",
+              "on-tertiary-fixed": "#443100",
+              "on-primary-fixed-variant": "#600009",
+              "secondary-fixed": "#26fedc",
+              "on-secondary": "#005d4f",
+              "surface-tint": "#ff8d87",
+              "error-dim": "#d53d18",
+              "on-secondary-container": "#ddfff5",
+              "on-surface": "#ffffff",
+              "tertiary-fixed-dim": "#eabe55",
+              "background": "#0e0e0f",
+              "surface-container-lowest": "#000000"
+            },
+            fontFamily: {
+              "headline": ["Plus Jakarta Sans"],
+              "body": ["Plus Jakarta Sans"],
+              "label": ["Plus Jakarta Sans"]
+            },
+            borderRadius: {"DEFAULT": "0.25rem", "lg": "0.5rem", "xl": "0.75rem", "full": "9999px"},
+          },
+        },
+      }
+    </script>
+<style>
+        body { font-family: 'Plus Jakarta Sans', sans-serif; }
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-background text-on-background min-h-screen">
+<!-- TopAppBar -->
+<header class="fixed top-0 w-full z-50 bg-white/60 dark:bg-[#0e0e0f]/60 backdrop-blur-xl">
+<div class="flex justify-between items-center px-8 py-6 w-full">
+<div class="flex items-center gap-4">
+<span class="material-symbols-outlined text-black dark:text-white cursor-pointer hover:opacity-80 transition-opacity" data-icon="menu">menu</span>
+</div>
+<div class="text-2xl font-black tracking-widest text-black dark:text-white">DIGEST</div>
+<div class="flex items-center gap-4">
+<span class="material-symbols-outlined text-black dark:text-white cursor-pointer hover:opacity-80 transition-opacity" data-icon="search">search</span>
+</div>
+</div>
+</header>
+<main class="pt-28 pb-32 px-8 max-w-7xl mx-auto">
+<!-- Section: Discovery Header -->
+<section class="mb-12">
+<h1 class="text-5xl md:text-7xl font-extrabold tracking-tighter mb-4 text-on-background">Explore</h1>
+<p class="text-on-surface-variant text-lg max-w-xl">Curated streams across every dimension of modern life.</p>
+</section>
+<!-- Trending Featured Card -->
+<section class="mb-10">
+<div class="relative w-full aspect-[21/9] rounded-xl overflow-hidden group cursor-pointer bg-surface-container-highest">
+<img alt="Trending Tech News" class="absolute inset-0 w-full h-full object-cover grayscale-[0.2] group-hover:scale-105 transition-transform duration-700" data-alt="dramatic high-contrast satellite view of earth at night with glowing data networks and vibrant city lights across continents" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCNheEH8kjM73kQwtSg38LFKVSRo5UgIGiIvwwO9OzmrMSLbEIvHXpjiIimg7r9uRA_zWjW6gHKkH7appVeh-gUyfQO-6FmP4M2ju9ewP28Or9LH9ft2vpEkymPh4ZmXuy-w5zjXxgOI8za3L280SyAEs_hZFtv7Pns82lU4i4ke5D86vmdxLR_LHyUv72UuRhaw3z0oEgYuTBdo-mSQ2CTyc8gtgWZd6jCX3QRMCfDWjI6qNq6Um8aZNTgaXS40qENkmK2uuHMkw8"/>
+<div class="absolute inset-0 bg-gradient-to-t from-black via-black/40 to-transparent"></div>
+<div class="absolute bottom-0 left-0 p-8 md:p-12 w-full">
+<div class="flex items-center gap-3 mb-4">
+<span class="bg-primary text-on-primary px-3 py-1 rounded-full text-xs font-bold tracking-wider uppercase">Trending</span>
+<span class="text-white/60 text-xs font-bold tracking-widest uppercase">8 Min Read</span>
+</div>
+<h2 class="text-3xl md:text-5xl font-black tracking-tight text-white mb-4 leading-none max-w-3xl">THE QUANTUM LEAP IN NEURAL ARCHITECTURE</h2>
+<p class="text-white/70 text-lg md:text-xl max-w-2xl hidden md:block">Unveiling the next generation of generative systems and their impact on global labor markets.</p>
+</div>
+</div>
+</section>
+<!-- Category Grid -->
+<section class="grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-6">
+<!-- World -->
+<div class="aspect-square bg-primary flex flex-col justify-between p-6 md:p-8 rounded-xl cursor-pointer hover:opacity-90 transition-all duration-200 group">
+<div class="flex justify-end">
+<span class="material-symbols-outlined text-on-primary text-4xl opacity-40 group-hover:scale-110 transition-transform" data-icon="public">public</span>
+</div>
+<h3 class="text-2xl md:text-4xl font-black text-on-primary tracking-tighter leading-none">WORLD</h3>
+</div>
+<!-- Tech -->
+<div class="aspect-square bg-secondary flex flex-col justify-between p-6 md:p-8 rounded-xl cursor-pointer hover:opacity-90 transition-all duration-200 group">
+<div class="flex justify-end">
+<span class="material-symbols-outlined text-on-secondary text-4xl opacity-40 group-hover:scale-110 transition-transform" data-icon="memory">memory</span>
+</div>
+<h3 class="text-2xl md:text-4xl font-black text-on-secondary tracking-tighter leading-none">TECH</h3>
+</div>
+<!-- Culture -->
+<div class="aspect-square bg-tertiary flex flex-col justify-between p-6 md:p-8 rounded-xl cursor-pointer hover:opacity-90 transition-all duration-200 group">
+<div class="flex justify-end">
+<span class="material-symbols-outlined text-on-tertiary text-4xl opacity-40 group-hover:scale-110 transition-transform" data-icon="theater_comedy">theater_comedy</span>
+</div>
+<h3 class="text-2xl md:text-4xl font-black text-on-tertiary tracking-tighter leading-none">CULTURE</h3>
+</div>
+<!-- Science -->
+<div class="aspect-square bg-error flex flex-col justify-between p-6 md:p-8 rounded-xl cursor-pointer hover:opacity-90 transition-all duration-200 group">
+<div class="flex justify-end">
+<span class="material-symbols-outlined text-on-error text-4xl opacity-40 group-hover:scale-110 transition-transform" data-icon="science">science</span>
+</div>
+<h3 class="text-2xl md:text-4xl font-black text-on-error tracking-tighter leading-none">SCIENCE</h3>
+</div>
+<!-- Finance -->
+<div class="aspect-square bg-white flex flex-col justify-between p-6 md:p-8 rounded-xl cursor-pointer hover:opacity-90 transition-all duration-200 group">
+<div class="flex justify-end">
+<span class="material-symbols-outlined text-black text-4xl opacity-20 group-hover:scale-110 transition-transform" data-icon="payments">payments</span>
+</div>
+<h3 class="text-2xl md:text-4xl font-black text-black tracking-tighter leading-none">FINANCE</h3>
+</div>
+<!-- Lifestyle -->
+<div class="aspect-square bg-primary-container flex flex-col justify-between p-6 md:p-8 rounded-xl cursor-pointer hover:opacity-90 transition-all duration-200 group">
+<div class="flex justify-end">
+<span class="material-symbols-outlined text-on-primary-container text-4xl opacity-40 group-hover:scale-110 transition-transform" data-icon="spa">spa</span>
+</div>
+<h3 class="text-2xl md:text-4xl font-black text-on-primary-container tracking-tighter leading-none">LIFE</h3>
+</div>
+<!-- Design -->
+<div class="aspect-square bg-secondary-container flex flex-col justify-between p-6 md:p-8 rounded-xl cursor-pointer hover:opacity-90 transition-all duration-200 group">
+<div class="flex justify-end">
+<span class="material-symbols-outlined text-on-secondary-container text-4xl opacity-40 group-hover:scale-110 transition-transform" data-icon="brush">brush</span>
+</div>
+<h3 class="text-2xl md:text-4xl font-black text-on-secondary-container tracking-tighter leading-none">DESIGN</h3>
+</div>
+<!-- Health -->
+<div class="aspect-square bg-tertiary-container flex flex-col justify-between p-6 md:p-8 rounded-xl cursor-pointer hover:opacity-90 transition-all duration-200 group">
+<div class="flex justify-end">
+<span class="material-symbols-outlined text-on-tertiary-container text-4xl opacity-40 group-hover:scale-110 transition-transform" data-icon="health_and_safety">health_and_safety</span>
+</div>
+<h3 class="text-2xl md:text-4xl font-black text-on-tertiary-container tracking-tighter leading-none">HEALTH</h3>
+</div>
+</section>
+</main>
+<!-- BottomNavBar -->
+<nav class="fixed bottom-6 left-1/2 -translate-x-1/2 w-[90%] max-w-md rounded-full bg-[#262627]/40 dark:bg-[#262627]/60 backdrop-blur-2xl shadow-[0_24px_40px_rgba(255,141,135,0.08)] z-50">
+<div class="flex justify-around items-center px-4 py-3">
+<!-- Home -->
+<button class="flex items-center justify-center text-white/50 p-3 hover:bg-white/10 transition-all active:scale-90 duration-150 rounded-full">
+<span class="material-symbols-outlined" data-icon="home">home</span>
+</button>
+<!-- Explore (Active) -->
+<button class="flex items-center justify-center bg-[#ff8d87] text-[#65000a] rounded-full p-3 transition-all active:scale-90 duration-150">
+<span class="material-symbols-outlined" data-icon="explore">explore</span>
+</button>
+<!-- AI/Mind -->
+<button class="flex items-center justify-center text-white/50 p-3 hover:bg-white/10 transition-all active:scale-90 duration-150 rounded-full">
+<span class="material-symbols-outlined" data-icon="psychology">psychology</span>
+</button>
+<!-- Person -->
+<button class="flex items-center justify-center text-white/50 p-3 hover:bg-white/10 transition-all active:scale-90 duration-150 rounded-full">
+<span class="material-symbols-outlined" data-icon="person">person</span>
+</button>
+</div>
+</nav>
+</body></html>
