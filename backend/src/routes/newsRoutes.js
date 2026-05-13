@@ -1,7 +1,6 @@
 const express = require('express');
 const router = express.Router();
 const newsAggregator = require('../services/newsAggregator');
-const currentsService = require('../services/currentsService');
 
 /**
  * GET /api/news
@@ -111,28 +110,19 @@ router.get('/search', async (req, res, next) => {
  */
 router.get('/categories', async (_req, res, next) => {
   try {
-    let categories = [];
-
-    // Try to get from Currents API (they have a categories endpoint)
-    try {
-      categories = await currentsService.getAvailableCategories();
-    } catch {
-      // Fallback to hardcoded list
-      categories = [
-        'general',
-        'technology',
-        'business',
-        'science',
-        'health',
-        'entertainment',
-        'sports',
-        'world',
-        'politics',
-        'finance',
-        'environment',
-        'lifestyle',
-      ];
-    }
+    // World News API supported categories
+    const categories = [
+      'politics',
+      'technology',
+      'business',
+      'science',
+      'health',
+      'entertainment',
+      'sports',
+      'environment',
+      'lifestyle',
+      'travel',
+    ];
 
     res.json({
       success: true,

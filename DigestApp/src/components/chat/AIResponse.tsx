@@ -1,21 +1,24 @@
 import React from 'react';
-import { View, Text, StyleSheet } from 'react-native';
+import { View, Text, StyleSheet, ActivityIndicator } from 'react-native';
 import { MaterialIcons } from '@expo/vector-icons';
-import { Colors, BorderRadius, Spacing } from '../../constants/theme';
-import { ChatMessage } from '../../types';
+import { Colors, BorderRadius } from '../../constants/theme';
 
 interface AIResponseProps {
-  message: ChatMessage;
+  content: string;
+  isRelevant?: boolean;
+  isLoading?: boolean;
 }
 
-export default function AIResponse({ message }: AIResponseProps) {
-  // Parse content with bold markers
+export default function AIResponse({
+  content,
+  isRelevant = true,
+  isLoading = false,
+}: AIResponseProps) {
+  // Parse bold markers (**text**) into styled spans
   const renderContent = (text: string) => {
     const parts = text.split(/\*\*(.*?)\*\*/g);
     return parts.map((part, i) => {
       if (i % 2 === 1) {
-        // This is bold text — find matching highlight
-        const highlight = message.highlights?.find((h) => h.text === part);
         return (
           <Text
             key={i}
@@ -23,7 +26,7 @@ export default function AIResponse({ message }: AIResponseProps) {
               styles.contentText,
               {
                 fontFamily: 'PlusJakartaSans-Bold',
-                color: highlight?.color || Colors.secondary,
+                color: Colors.secondary,
               },
             ]}
           >
@@ -39,64 +42,50 @@ export default function AIResponse({ message }: AIResponseProps) {
     });
   };
 
+  if (isLoading) {
+    return (
+      <View style={styles.container}>
+        <View style={styles.headerRow}>
+          <View style={styles.avatar}>
+            <MaterialIcons name="psychology" size={16} color={Colors.onSecondary} />
+          </View>
+          <Text style={styles.label}>DIGEST AI</Text>
+        </View>
+        <View style={styles.loadingContainer}>
+          <ActivityIndicator size="small" color={Colors.secondary} />
+          <Text style={styles.loadingText}>Thinking...</Text>
+        </View>
+      </View>
+    );
+  }
+
   return (
     <View style={styles.container}>
       {/* AI Avatar + Label */}
       <View style={styles.headerRow}>
-        <View style={styles.avatar}>
-          <MaterialIcons name="psychology" size={16} color={Colors.onSecondary} />
+        <View style={[styles.avatar, !isRelevant && styles.avatarOffTopic]}>
+          <MaterialIcons
+            name={isRelevant ? 'psychology' : 'info-outline'}
+            size={16}
+            color={isRelevant ? Colors.onSecondary : Colors.onSurface}
+          />
         </View>
-        <Text style={styles.label}>DIGEST INTELLIGENCE</Text>
+        <Text style={styles.label}>DIGEST AI</Text>
+        {!isRelevant && (
+          <View style={styles.offTopicBadge}>
+            <Text style={styles.offTopicText}>OFF TOPIC</Text>
+          </View>
+        )}
       </View>
 
-      {/* Main Content */}
-      <View style={styles.contentSection}>
-        <Text style={styles.contentWrapper}>{renderContent(message.content)}</Text>
-
-        {/* Info Cards Grid */}
-        {message.infoCards && message.infoCards.length > 0 && (
-          <View style={styles.cardsGrid}>
-            {message.infoCards.map((card, index) => (
-              <View
-                key={index}
-                style={[
-                  styles.infoCard,
-                  { borderLeftColor: card.borderColor },
-                ]}
-              >
-                <MaterialIcons
-                  name={card.icon as any}
-                  size={22}
-                  color={card.titleColor}
-                  style={styles.cardIcon}
-                />
-                <Text style={[styles.cardTitle, { color: card.titleColor }]}>
-                  {card.title}
-                </Text>
-                <Text style={styles.cardContent}>{card.content}</Text>
-              </View>
-            ))}
-          </View>
-        )}
-
-        {/* Quote */}
-        {message.quote && (
-          <Text style={styles.quoteText}>{message.quote}</Text>
-        )}
-
-        {/* Warning Card */}
-        {message.warning && (
-          <View style={styles.warningCard}>
-            <MaterialIcons
-              name="warning"
-              size={22}
-              color={Colors.errorDim}
-            />
-            <View style={{ flex: 1 }}>
-              <Text style={styles.warningText}>{message.warning.content}</Text>
-            </View>
-          </View>
-        )}
+      {/* Content */}
+      <View
+        style={[
+          styles.contentSection,
+          !isRelevant && styles.contentSectionOffTopic,
+        ]}
+      >
+        <Text style={styles.contentWrapper}>{renderContent(content)}</Text>
       </View>
     </View>
   );
@@ -104,9 +93,9 @@ export default function AIResponse({ message }: AIResponseProps) {
 
 const styles = StyleSheet.create({
   container: {
-    maxWidth: '90%',
-    marginBottom: 24,
-    gap: 16,
+    maxWidth: '92%',
+    marginBottom: 20,
+    gap: 10,
   },
   headerRow: {
     flexDirection: 'row',
@@ -121,6 +110,9 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
+  avatarOffTopic: {
+    backgroundColor: Colors.surfaceContainerHighest,
+  },
   label: {
     fontFamily: 'PlusJakartaSans-Bold',
     fontSize: 10,
@@ -128,65 +120,49 @@ const styles = StyleSheet.create({
     color: Colors.onSurfaceVariant,
     textTransform: 'uppercase',
   },
-  contentSection: {
-    gap: 16,
+  offTopicBadge: {
+    backgroundColor: 'rgba(255,115,81,0.15)',
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+    borderRadius: 999,
   },
-  contentWrapper: {
-    // Parent Text for inline rendering
-  },
-  contentText: {
-    fontFamily: 'PlusJakartaSans-Regular',
-    fontSize: 17,
-    lineHeight: 28,
-    color: Colors.onSurface,
-  },
-  cardsGrid: {
-    gap: 12,
-    marginTop: 8,
-  },
-  infoCard: {
-    backgroundColor: Colors.surfaceContainerLow,
-    padding: 20,
-    borderRadius: BorderRadius.xl,
-    borderLeftWidth: 4,
-  },
-  cardIcon: {
-    marginBottom: 8,
-  },
-  cardTitle: {
+  offTopicText: {
     fontFamily: 'PlusJakartaSans-Bold',
-    fontSize: 12,
-    letterSpacing: 2,
-    textTransform: 'uppercase',
-    marginBottom: 6,
+    fontSize: 8,
+    letterSpacing: 1.5,
+    color: Colors.error,
   },
-  cardContent: {
-    fontFamily: 'PlusJakartaSans-Regular',
-    fontSize: 13,
-    lineHeight: 20,
-    color: Colors.onSurfaceVariant,
+  contentSection: {
+    backgroundColor: Colors.surfaceContainerLow,
+    borderRadius: BorderRadius.xl,
+    padding: 20,
+    marginLeft: 38,
   },
-  quoteText: {
+  contentSectionOffTopic: {
+    borderWidth: 1,
+    borderColor: 'rgba(255,115,81,0.2)',
+    backgroundColor: 'rgba(255,115,81,0.04)',
+  },
+  contentWrapper: {},
+  contentText: {
     fontFamily: 'PlusJakartaSans-Regular',
     fontSize: 15,
     lineHeight: 24,
-    color: Colors.onSurfaceVariant,
-    fontStyle: 'italic',
-    marginTop: 4,
-  },
-  warningCard: {
-    flexDirection: 'row',
-    alignItems: 'flex-start',
-    gap: 12,
-    backgroundColor: Colors.surfaceContainer,
-    padding: 20,
-    borderRadius: 20,
-    marginTop: 4,
-  },
-  warningText: {
-    fontFamily: 'PlusJakartaSans-Regular',
-    fontSize: 13,
-    lineHeight: 20,
     color: Colors.onSurface,
+  },
+  loadingContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+    marginLeft: 38,
+    paddingVertical: 16,
+    paddingHorizontal: 20,
+    backgroundColor: Colors.surfaceContainerLow,
+    borderRadius: BorderRadius.xl,
+  },
+  loadingText: {
+    fontFamily: 'PlusJakartaSans-Medium',
+    fontSize: 14,
+    color: Colors.onSurfaceVariant,
   },
 });

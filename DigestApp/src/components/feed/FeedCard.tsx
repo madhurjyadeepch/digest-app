@@ -24,7 +24,7 @@ interface FeedCardProps {
 
 export default function FeedCard({ article, index }: FeedCardProps) {
   const router = useRouter();
-  const cardNumber = String(index + 1).padStart(2, '0');
+
   const translateX = useRef(new Animated.Value(0)).current;
   const hasNavigated = useRef(false);
 
@@ -71,7 +71,10 @@ export default function FeedCard({ article, index }: FeedCardProps) {
             duration: 250,
             useNativeDriver: true,
           }).start(() => {
-            router.push('/(tabs)/ai');
+            router.push({
+              pathname: '/(tabs)/ai' as any,
+              params: { articleData: JSON.stringify(article) },
+            });
             setTimeout(() => {
               translateX.setValue(0);
               hasNavigated.current = false;
@@ -170,10 +173,7 @@ export default function FeedCard({ article, index }: FeedCardProps) {
             </View>
           </View>
 
-          {/* Card Number Watermark */}
-          <View style={styles.watermarkContainer}>
-            <Text style={styles.watermark}>{cardNumber}</Text>
-          </View>
+
         </View>
       </Animated.View>
     </View>
@@ -277,17 +277,5 @@ const styles = StyleSheet.create({
     textTransform: 'uppercase',
     color: 'rgba(255,255,255,0.9)',
   },
-  watermarkContainer: {
-    position: 'absolute',
-    bottom: -30,
-    right: -10,
-    opacity: 0.08,
-    zIndex: 1,
-  },
-  watermark: {
-    fontFamily: 'PlusJakartaSans-ExtraBold',
-    fontSize: 160,
-    letterSpacing: -8,
-    color: '#ffffff',
-  },
+
 });

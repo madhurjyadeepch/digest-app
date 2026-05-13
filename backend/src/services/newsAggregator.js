@@ -1,30 +1,37 @@
+const worldNewsService = require('./worldNewsService');
 const gnewsService = require('./gnewsService');
 const currentsService = require('./currentsService');
 const cacheService = require('./cacheService');
 const memoryCache = require('./memoryCache');
 
 /**
- * News Aggregator — v2 (Speed + Infinite Scroll)
+ * News Aggregator — v3 (World News API + Full Articles)
+ *
+ * Priority chain:
+ *   1. World News API (primary — full articles, India-focused)
+ *   2. GNews (fallback)
+ *   3. Currents (fallback)
+ *   4. Firestore cache (last resort)
  *
  * Speed strategy:
- *   1. In-memory cache (< 1ms) → Firestore cache (~200ms) → External API (~800ms)
+ *   In-memory cache (<1ms) → Firestore cache (~200ms) → External API (~800ms)
  *
- * Infinite scroll strategy:
- *   - Maintains a large "article pool" by merging articles across categories
- *   - Each page request returns a different slice from the pool
- *   - Pool is refilled by cycling through categories
+ * Feed strategy:
+ *   - India news from World News API (/search-news?source-countries=in)
+ *   - Global top stories from World News API (/top-news?source-country=us)
+ *   - Mixed feed: ~60% India + ~40% global for Gen Z consumption
  */
 
 // All categories we fetch for the pool
 const ALL_CATEGORIES = [
-  'general',
+  'politics',
   'technology',
   'business',
   'science',
   'health',
   'entertainment',
   'sports',
-  'world',
+  'environment',
 ];
 
 class NewsAggregator {
@@ -76,7 +83,7 @@ class NewsAggregator {
     if (category) {
       // Specific category request
       articles = await this._fetchCategory(category);
-      source = 'api';
+      source = 'worldnews';
     } else {
       // General feed — build from the pool
       articles = await this._getPoolArticles();
@@ -87,7 +94,7 @@ class NewsAggregator {
     if (articles.length > 0) {
       memoryCache.set(cacheKey, articles);
       // Fire-and-forget Firestore cache (don't block response)
-      cacheService.cacheArticles(cacheKey, articles.slice(0, 20)).catch(() => {});
+      cacheService.cacheArticles(cacheKey, articles.slice(0, 30)).catch(() => {});
     }
 
     const paginated = this._paginate(articles, page, limit);
@@ -105,12 +112,26 @@ class NewsAggregator {
 
   /**
    * Fetch articles for a specific category.
-   * Tries GNews → Currents → Firestore cache → stale memory.
+   * Priority: World News API → GNews → Currents → Firestore cache.
    */
   async _fetchCategory(category) {
-    const gnewsCat = this._mapCategoryToGNews(category);
+    // Try World News API first (primary source)
+    if (worldNewsService.isAvailable()) {
+      try {
+        const articles = await worldNewsService.fetchByCategory(category, {
+          number: 20,
+        });
+        if (articles.length > 0) {
+          articles.forEach((a) => this._articlePool.set(a.id, a));
+          return articles;
+        }
+      } catch (e) {
+        console.warn(`[Aggregator] World News API failed for ${category}:`, e.message);
+      }
+    }
 
-    // Try GNews
+    // Fallback: GNews
+    const gnewsCat = this._mapCategoryToGNews(category);
     if (gnewsService.isAvailable()) {
       try {
         const articles = await gnewsService.fetchTopHeadlines({
@@ -118,7 +139,6 @@ class NewsAggregator {
           max: 10,
         });
         if (articles.length > 0) {
-          // Add to pool
           articles.forEach((a) => this._articlePool.set(a.id, a));
           return articles;
         }
@@ -127,7 +147,7 @@ class NewsAggregator {
       }
     }
 
-    // Try Currents
+    // Fallback: Currents
     if (currentsService.isAvailable()) {
       try {
         const articles = await currentsService.fetchLatestNews({ category });
@@ -140,7 +160,7 @@ class NewsAggregator {
       }
     }
 
-    // Fallback to Firestore
+    // Last resort: Firestore cache
     const cached = await cacheService.getCachedArticles(`feed:${category}`);
     if (cached && cached.length > 0) return cached;
 
@@ -149,11 +169,11 @@ class NewsAggregator {
 
   /**
    * Get articles from the master pool (for infinite scroll).
-   * The pool merges articles from ALL categories.
+   * The pool mixes India news with global top stories.
    */
   async _getPoolArticles() {
     // If pool is already filled, return it sorted by date
-    if (this._articlePool.size >= 20) {
+    if (this._articlePool.size >= 30) {
       return this._getSortedPool();
     }
 
@@ -165,16 +185,39 @@ class NewsAggregator {
       }
     }
 
-    // If still not enough, fetch a couple categories fresh
-    if (this._articlePool.size < 10) {
-      // Fetch general + technology in parallel for speed
-      const fetches = ['general', 'technology', 'science'].map(async (cat) => {
-        try {
-          return await this._fetchCategory(cat);
-        } catch {
-          return [];
-        }
-      });
+    // If still not enough, fetch fresh content
+    if (this._articlePool.size < 15) {
+      // Fetch India news + global top stories in parallel
+      const fetches = [];
+
+      if (worldNewsService.isAvailable()) {
+        // India-focused news (primary)
+        fetches.push(
+          worldNewsService
+            .fetchIndiaNews({ number: 30 })
+            .catch((e) => {
+              console.warn('[Aggregator] India news fetch failed:', e.message);
+              return [];
+            })
+        );
+
+        // Global top stories
+        fetches.push(
+          worldNewsService
+            .fetchTopGlobalNews()
+            .catch((e) => {
+              console.warn('[Aggregator] Global news fetch failed:', e.message);
+              return [];
+            })
+        );
+      } else {
+        // Fallback to GNews/Currents
+        fetches.push(
+          this._fetchCategory('politics').catch(() => []),
+          this._fetchCategory('technology').catch(() => []),
+          this._fetchCategory('science').catch(() => [])
+        );
+      }
 
       const results = await Promise.all(fetches);
       results.flat().forEach((a) => this._articlePool.set(a.id, a));
@@ -236,7 +279,17 @@ class NewsAggregator {
 
     let articles = [];
 
-    if (gnewsService.isAvailable()) {
+    // Try World News API top global stories first
+    if (worldNewsService.isAvailable()) {
+      try {
+        articles = await worldNewsService.fetchTopGlobalNews();
+      } catch {
+        console.warn('[Aggregator] World News trending failed');
+      }
+    }
+
+    // Fallback: GNews
+    if (articles.length === 0 && gnewsService.isAvailable()) {
       try {
         articles = await gnewsService.fetchTopHeadlines({
           category: 'general',
@@ -247,6 +300,7 @@ class NewsAggregator {
       }
     }
 
+    // Fallback: Currents
     if (articles.length === 0 && currentsService.isAvailable()) {
       try {
         articles = await currentsService.fetchLatestNews();
@@ -272,7 +326,18 @@ class NewsAggregator {
     let articles = [];
     let source = '';
 
-    if (gnewsService.isAvailable()) {
+    // Try World News API search first
+    if (worldNewsService.isAvailable()) {
+      try {
+        articles = await worldNewsService.searchNews(query, { number: limit });
+        source = 'worldnews';
+      } catch {
+        console.warn('[Aggregator] World News search failed');
+      }
+    }
+
+    // Fallback: GNews
+    if (articles.length === 0 && gnewsService.isAvailable()) {
       try {
         articles = await gnewsService.searchArticles(query, { max: limit });
         source = 'gnews';
@@ -281,6 +346,7 @@ class NewsAggregator {
       }
     }
 
+    // Fallback: Currents
     if (articles.length === 0 && currentsService.isAvailable()) {
       try {
         articles = await currentsService.searchNews(query);
@@ -301,6 +367,39 @@ class NewsAggregator {
     console.log('[Aggregator] Starting full cache refresh...');
     let successCount = 0;
 
+    // First, fetch India news + global top stories (most important)
+    if (worldNewsService.isAvailable()) {
+      try {
+        const indiaNews = await worldNewsService.fetchIndiaNews({ number: 40 });
+        if (indiaNews.length > 0) {
+          memoryCache.set('feed:india', indiaNews);
+          indiaNews.forEach((a) => this._articlePool.set(a.id, a));
+          successCount++;
+          console.log(`[Aggregator] Cached ${indiaNews.length} India articles`);
+        }
+      } catch (e) {
+        console.error('[Aggregator] Failed India news refresh:', e.message);
+      }
+
+      // Small delay to respect rate limits
+      await new Promise((r) => setTimeout(r, 1000));
+
+      try {
+        const globalNews = await worldNewsService.fetchTopGlobalNews();
+        if (globalNews.length > 0) {
+          memoryCache.set('trending', globalNews);
+          globalNews.forEach((a) => this._articlePool.set(a.id, a));
+          successCount++;
+          console.log(`[Aggregator] Cached ${globalNews.length} global top stories`);
+        }
+      } catch (e) {
+        console.error('[Aggregator] Failed global news refresh:', e.message);
+      }
+
+      await new Promise((r) => setTimeout(r, 1000));
+    }
+
+    // Then fetch by category
     for (const category of ALL_CATEGORIES) {
       try {
         const articles = await this._fetchCategory(category);
@@ -308,7 +407,7 @@ class NewsAggregator {
           memoryCache.set(`feed:${category}`, articles);
           successCount++;
         }
-        // Small delay to respect rate limits
+        // Rate limit delay
         await new Promise((r) => setTimeout(r, 1500));
       } catch (error) {
         console.error(`[Aggregator] Failed "${category}":`, error.message);
@@ -318,17 +417,9 @@ class NewsAggregator {
     // Refresh the combined "all" feed
     memoryCache.delete('feed:all');
 
-    // Refresh trending
-    try {
-      await this.getTrendingArticles(10);
-      successCount++;
-    } catch {
-      console.error('[Aggregator] Failed trending');
-    }
-
     this._poolReady = true;
     console.log(
-      `[Aggregator] Cache refresh done: ${successCount}/${ALL_CATEGORIES.length + 1} OK | Pool: ${this._articlePool.size} articles`
+      `[Aggregator] Cache refresh done: ${successCount}/${ALL_CATEGORIES.length + 2} OK | Pool: ${this._articlePool.size} articles`
     );
   }
 

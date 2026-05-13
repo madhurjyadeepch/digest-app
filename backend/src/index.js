@@ -5,6 +5,7 @@ const cors = require('cors');
 const newsRoutes = require('./routes/newsRoutes');
 const userRoutes = require('./routes/userRoutes');
 const authRoutes = require('./routes/authRoutes');
+const chatRoutes = require('./routes/chatRoutes');
 const { errorHandler } = require('./middleware/errorHandler');
 const { startCacheRefreshJob } = require('./jobs/refreshCache');
 
@@ -27,6 +28,7 @@ if (process.env.NODE_ENV === 'development') {
 app.use('/api/news', newsRoutes);
 app.use('/api/user', userRoutes);
 app.use('/api/auth', authRoutes);
+app.use('/api/chat', chatRoutes);
 
 // Health check
 app.get('/api/health', (_req, res) => {

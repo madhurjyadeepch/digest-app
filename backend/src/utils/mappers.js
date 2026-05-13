@@ -208,8 +208,15 @@ function buildFullContent(mainText, description) {
       .filter((p) => p.length > 20);
 
     paragraphs.forEach((para, i) => {
+      // Detect quoted text (starts with " or ')
+      if (
+        (para.startsWith('"') && para.endsWith('"')) ||
+        (para.startsWith('\u201c') && para.endsWith('\u201d'))
+      ) {
+        sections.push({ type: 'quote', content: para });
+      }
       // If a paragraph looks like a heading (short, no period at end)
-      if (para.length < 80 && !para.endsWith('.') && i > 0) {
+      else if (para.length < 80 && !para.endsWith('.') && i > 0) {
         sections.push({ type: 'heading', content: para });
       } else {
         sections.push({ type: 'paragraph', content: para });
@@ -264,12 +271,92 @@ function capitalize(str) {
   return str.charAt(0).toUpperCase() + str.slice(1).toLowerCase();
 }
 
+// ─── World News API → Digest Article Mapper ─────────
+/**
+ * Transform a World News API article into the Digest app's Article format.
+ *
+ * World News API shape:
+ * { id, title, text, summary, url, image, video, publish_date,
+ *   author, authors, language, category, source_country, sentiment }
+ */
+function mapWorldNewsToArticle(worldNewsArticle, index = 0) {
+  const {
+    id: worldNewsId = '',
+    title = 'Untitled',
+    text = '',
+    summary = '',
+    url = '',
+    image = '',
+    video = null,
+    publish_date: publishDate = '',
+    author = '',
+    authors = [],
+    category: rawCategory = '',
+    source_country: sourceCountry = '',
+    sentiment = 0,
+  } = worldNewsArticle;
+
+  // Clean up the article text — remove common boilerplate patterns
+  let cleanText = (text || '')
+    .replace(/Subscribe to our newsletter.*$/i, '')
+    .replace(/Sign up for.*$/i, '')
+    .replace(/Read More News on.*$/im, '')
+    .replace(/\(You can now subscribe.*?\)/g, '')
+    .replace(/Add as a Reliable.*$/im, '')
+    .trim();
+
+  // Determine category — use the API's category or guess from content
+  const categoryName = rawCategory
+    ? capitalize(rawCategory)
+    : guessCategory(title, summary || text) || 'General';
+
+  // Build rich fullContent sections from the full article text
+  const fullContent = buildFullContent(cleanText, summary);
+
+  // Determine the primary author name
+  const authorName = (authors && authors.length > 0)
+    ? authors[0].replace(/^By\s+/i, '').trim()
+    : (author || '').replace(/^By\s+/i, '').trim() || 'Staff Reporter';
+
+  // Clean up author names array
+  const cleanAuthors = (authors || []).map(
+    (a) => a.replace(/^By\s+/i, '').trim()
+  ).filter(Boolean);
+
+  return {
+    id: String(worldNewsId) || generateArticleId(url),
+    category: categoryName,
+    categoryColor: assignCategoryColor(categoryName.toLowerCase()),
+    title: title.trim(),
+    summary: (summary || cleanText.substring(0, 250)).trim(),
+    dominantColor: getDominantColor(categoryName.toLowerCase()),
+    fullContent,
+    author: {
+      name: authorName,
+      role: sourceCountry === 'in' ? 'India Correspondent' : 'Correspondent',
+      avatar: `https://i.pravatar.cc/100?img=${(index % 70) + 1}`,
+    },
+    readTime: estimateReadTime(cleanText || summary),
+    imageUrl: image || `https://picsum.photos/seed/${worldNewsId || generateArticleId(url)}/800/600`,
+    sourceUrl: url,
+    publishedAt: publishDate,
+    source: authorName,
+    // New fields from World News API
+    sentiment,
+    sourceCountry,
+    authors: cleanAuthors,
+    videoUrl: video || null,
+  };
+}
+
 module.exports = {
   mapGNewsToArticle,
   mapCurrentsToArticle,
+  mapWorldNewsToArticle,
   generateArticleId,
   estimateReadTime,
   assignCategoryColor,
   getDominantColor,
   capitalize,
 };
+

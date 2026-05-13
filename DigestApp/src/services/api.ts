@@ -3,13 +3,12 @@ import { Article } from '../types';
 
 // ─── Configuration ──────────────────────────────────
 // For physical devices on the same WiFi, use the machine's LAN IP.
-// For iOS Simulator, localhost works. For Android emulator, use 10.0.2.2.
+// For Android emulator only, use 10.0.2.2 instead.
+const LAN_IP = '192.168.1.2';
+
 const getDevBaseUrl = () => {
-  if (Platform.OS === 'android') {
-    return 'http://10.0.2.2:3001/api'; // Android emulator
-  }
-  // Use LAN IP — works for both Simulator and physical devices
-  return 'http://192.168.1.17:3001/api';
+  // LAN IP works for physical devices (Android & iOS) and iOS Simulator
+  return `http://${LAN_IP}:3001/api`;
 };
 
 const BASE_URL = __DEV__
@@ -40,7 +39,7 @@ class DigestAPI {
 
   constructor(baseUrl: string) {
     this.baseUrl = baseUrl;
-    this.timeout = 8000; // 8s timeout
+    this.timeout = 15000; // 15s timeout — full article payloads are larger
   }
 
   /**
@@ -207,6 +206,29 @@ class DigestAPI {
     const response = await this.request('/auth/profile', {
       headers: { Authorization: `Bearer ${token}` },
     });
+    return response.data;
+  }
+
+  // ─── AI Chat ───────────────────────────────────────
+
+  async sendChatMessage(
+    question: string,
+    article: { title: string; content: string; category: string },
+    chatHistory: { role: string; content: string }[] = []
+  ): Promise<{ answer: string; isRelevant: boolean }> {
+    const response = await this.request<{ answer: string; isRelevant: boolean }>(
+      '/chat',
+      {
+        method: 'POST',
+        body: JSON.stringify({
+          question,
+          articleTitle: article.title,
+          articleContent: article.content,
+          articleCategory: article.category,
+          chatHistory,
+        }),
+      }
+    );
     return response.data;
   }
 

@@ -17,6 +17,11 @@ export interface Article {
   sourceUrl?: string;
   publishedAt?: string;
   source?: string;
+  // World News API enrichments
+  sentiment?: number;        // -1 to 1 sentiment score
+  sourceCountry?: string;    // Country code (e.g., "in", "us")
+  authors?: string[];        // Array of author names
+  videoUrl?: string;         // Video URL if available
 }
 
 export interface ArticleSection {
