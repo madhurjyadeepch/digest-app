@@ -1,27 +1,104 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   View,
   Text,
   ScrollView,
   TouchableOpacity,
   StyleSheet,
+  ActivityIndicator,
+  Linking,
 } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { MaterialIcons } from '@expo/vector-icons';
 import { Colors, Spacing, BorderRadius } from '../../src/constants/theme';
-import { ARTICLES } from '../../src/constants/mockData';
+import api from '../../src/services/api';
 import ArticleHero from '../../src/components/article/ArticleHero';
 import ArticleBody from '../../src/components/article/ArticleBody';
 import SubscribeCTA from '../../src/components/article/SubscribeCTA';
 import RelatedCard from '../../src/components/article/RelatedCard';
+import { Article } from '../../src/types';
 
 export default function ArticleScreen() {
-  const { id } = useLocalSearchParams<{ id: string }>();
+  const { id, articleData } = useLocalSearchParams<{
+    id: string;
+    articleData?: string;
+  }>();
   const router = useRouter();
   const insets = useSafeAreaInsets();
 
-  const article = ARTICLES.find((a) => a.id === id) || ARTICLES[0];
+  const [article, setArticle] = useState<Article | null>(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    loadArticle();
+  }, [id]);
+
+  async function loadArticle() {
+    setLoading(true);
+
+    // First try to use the passed article data (avoids extra API call)
+    if (articleData) {
+      try {
+        const parsed = JSON.parse(articleData);
+        setArticle(parsed);
+        setLoading(false);
+        return;
+      } catch {
+        // Fall through to API call
+      }
+    }
+
+    // Fetch from API
+    try {
+      const fetched = await api.getArticleById(id);
+      if (fetched) {
+        setArticle(fetched);
+      }
+    } catch (error) {
+      console.error('[ArticleScreen] Failed to fetch article:', error);
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  // Loading state
+  if (loading) {
+    return (
+      <View style={[styles.container, styles.loadingContainer]}>
+        <TouchableOpacity
+          style={[styles.backButton, { top: insets.top + 8 }]}
+          onPress={() => router.back()}
+          activeOpacity={0.7}
+        >
+          <MaterialIcons name="arrow-back" size={22} color={Colors.onSurface} />
+        </TouchableOpacity>
+        <ActivityIndicator size="large" color={Colors.primary} />
+      </View>
+    );
+  }
+
+  // No article found
+  if (!article) {
+    return (
+      <View style={[styles.container, styles.loadingContainer]}>
+        <TouchableOpacity
+          style={[styles.backButton, { top: insets.top + 8 }]}
+          onPress={() => router.back()}
+          activeOpacity={0.7}
+        >
+          <MaterialIcons name="arrow-back" size={22} color={Colors.onSurface} />
+        </TouchableOpacity>
+        <Text style={styles.notFoundText}>Article not found</Text>
+        <TouchableOpacity
+          style={styles.goBackBtn}
+          onPress={() => router.back()}
+        >
+          <Text style={styles.goBackText}>GO BACK</Text>
+        </TouchableOpacity>
+      </View>
+    );
+  }
 
   return (
     <View style={styles.container}>
@@ -43,7 +120,47 @@ export default function ArticleScreen() {
         <ArticleHero article={article} />
 
         {/* Article Body */}
-        <ArticleBody sections={article.fullContent} />
+        {article.fullContent && article.fullContent.length > 0 ? (
+          <ArticleBody sections={article.fullContent} />
+        ) : (
+          <View style={styles.summaryBody}>
+            <Text style={styles.summaryText}>{article.summary}</Text>
+            {article.sourceUrl && (
+              <TouchableOpacity
+                style={styles.readFullButton}
+                onPress={() => Linking.openURL(article.sourceUrl!)}
+                activeOpacity={0.7}
+              >
+                <Text style={styles.readFullText}>READ FULL ARTICLE</Text>
+                <MaterialIcons
+                  name="open-in-new"
+                  size={16}
+                  color={Colors.primary}
+                />
+              </TouchableOpacity>
+            )}
+          </View>
+        )}
+
+        {/* Source link for API articles */}
+        {article.sourceUrl && (
+          <View style={styles.sourceSection}>
+            <TouchableOpacity
+              style={styles.sourceButton}
+              onPress={() => Linking.openURL(article.sourceUrl!)}
+              activeOpacity={0.7}
+            >
+              <MaterialIcons
+                name="open-in-new"
+                size={16}
+                color={Colors.secondary}
+              />
+              <Text style={styles.sourceText}>
+                View original on {article.source || 'source'}
+              </Text>
+            </TouchableOpacity>
+          </View>
+        )}
 
         {/* Subscribe CTA */}
         <SubscribeCTA />
@@ -94,6 +211,10 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: Colors.background,
   },
+  loadingContainer: {
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
   backButton: {
     position: 'absolute',
     left: 20,
@@ -107,6 +228,70 @@ const styles = StyleSheet.create({
   },
   scroll: {
     flex: 1,
+  },
+  notFoundText: {
+    fontFamily: 'PlusJakartaSans-Medium',
+    fontSize: 16,
+    color: Colors.onSurfaceVariant,
+    marginBottom: 16,
+  },
+  goBackBtn: {
+    paddingHorizontal: 24,
+    paddingVertical: 12,
+    borderRadius: 999,
+    backgroundColor: Colors.surfaceContainer,
+  },
+  goBackText: {
+    fontFamily: 'PlusJakartaSans-Bold',
+    fontSize: 11,
+    letterSpacing: 2,
+    color: Colors.onSurface,
+  },
+  summaryBody: {
+    paddingHorizontal: Spacing.xxxl,
+    paddingVertical: Spacing.huge,
+    backgroundColor: Colors.surfaceContainerLow,
+  },
+  summaryText: {
+    fontFamily: 'PlusJakartaSans-Medium',
+    fontSize: 18,
+    lineHeight: 30,
+    color: Colors.onSurface,
+    marginBottom: 24,
+  },
+  readFullButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    alignSelf: 'flex-start',
+    paddingHorizontal: 20,
+    paddingVertical: 12,
+    borderRadius: 999,
+    backgroundColor: Colors.surfaceContainer,
+  },
+  readFullText: {
+    fontFamily: 'PlusJakartaSans-Bold',
+    fontSize: 11,
+    letterSpacing: 2,
+    color: Colors.primary,
+  },
+  sourceSection: {
+    paddingHorizontal: Spacing.xxxl,
+    paddingVertical: Spacing.xl,
+    backgroundColor: Colors.surfaceContainerLow,
+    borderTopWidth: 1,
+    borderTopColor: Colors.outlineVariant,
+  },
+  sourceButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  sourceText: {
+    fontFamily: 'PlusJakartaSans-Medium',
+    fontSize: 13,
+    color: Colors.secondary,
+    textDecorationLine: 'underline',
   },
   relatedSection: {
     backgroundColor: Colors.surfaceContainerLow,

@@ -54,7 +54,10 @@ export default function FeedCard({ article, index }: FeedCardProps) {
             duration: 250,
             useNativeDriver: true,
           }).start(() => {
-            router.push(`/article/${article.id}`);
+            router.push({
+              pathname: '/article/[id]' as any,
+              params: { id: article.id, articleData: JSON.stringify(article) },
+            });
             setTimeout(() => {
               translateX.setValue(0);
               hasNavigated.current = false;

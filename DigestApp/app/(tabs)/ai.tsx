@@ -8,7 +8,8 @@ import {
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Colors, Spacing } from '../../src/constants/theme';
-import { CHAT_MESSAGES, ARTICLES } from '../../src/constants/mockData';
+import { CHAT_MESSAGES } from '../../src/constants/mockData';
+import { useNews } from '../../src/hooks/useNews';
 import Header from '../../src/components/common/Header';
 import ArticleContext from '../../src/components/chat/ArticleContext';
 import ChatBubble from '../../src/components/chat/ChatBubble';
@@ -18,7 +19,10 @@ import { ChatMessage } from '../../src/types';
 
 export default function AIScreen() {
   const insets = useSafeAreaInsets();
-  const contextArticle = ARTICLES[0]; // Use first article as context
+
+  // Use first article from real news feed as context
+  const { articles } = useNews({ limit: 1 });
+  const contextArticle = articles.length > 0 ? articles[0] : null;
 
   const renderMessage = ({ item }: { item: ChatMessage }) => {
     if (item.type === 'user') {
@@ -45,11 +49,19 @@ export default function AIScreen() {
           ]}
           showsVerticalScrollIndicator={false}
           ListHeaderComponent={
-            <ArticleContext
-              title={contextArticle.title}
-              subtitle={contextArticle.summary}
-              imageUrl={contextArticle.imageUrl}
-            />
+            contextArticle ? (
+              <ArticleContext
+                title={contextArticle.title}
+                subtitle={contextArticle.summary}
+                imageUrl={contextArticle.imageUrl}
+              />
+            ) : (
+              <ArticleContext
+                title="Digest AI Assistant"
+                subtitle="Ask me anything about the latest news"
+                imageUrl="https://images.unsplash.com/photo-1677442136019-21780ecad995?w=800"
+              />
+            )
           }
         />
         <ChatInput

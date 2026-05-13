@@ -4,7 +4,7 @@ export interface Article {
   categoryColor: 'primary' | 'secondary' | 'tertiary' | 'error';
   title: string;
   summary: string;
-  fullContent: ArticleSection[];
+  fullContent?: ArticleSection[];
   author: {
     name: string;
     role: string;
@@ -14,6 +14,9 @@ export interface Article {
   readTime: string;
   imageUrl: string;
   relatedArticles?: RelatedArticle[];
+  sourceUrl?: string;
+  publishedAt?: string;
+  source?: string;
 }
 
 export interface ArticleSection {

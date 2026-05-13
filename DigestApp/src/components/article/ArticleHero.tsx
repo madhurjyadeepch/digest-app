@@ -31,11 +31,11 @@ export default function ArticleHero({ article }: ArticleHeroProps) {
       <View style={styles.overlay}>
         <View style={styles.badge}>
           <Text style={styles.badgeText}>
-            {article.category.toUpperCase()} & FUTURE
+            {article.category.toUpperCase()}
           </Text>
         </View>
-        <Text style={styles.title}>
-          THE ARCHITECTURE{'\n'}OF SILENCE.
+        <Text style={styles.title} numberOfLines={3}>
+          {article.title}
         </Text>
         <View style={styles.authorRow}>
           <Image

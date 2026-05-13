@@ -6,15 +6,13 @@ import {
   Image,
   StyleSheet,
   TouchableOpacity,
+  ActivityIndicator,
 } from 'react-native';
 import { MaterialIcons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Colors, Spacing, BorderRadius } from '../../src/constants/theme';
-import { ARTICLES } from '../../src/constants/mockData';
+import { useBookmarks } from '../../src/hooks/useBookmarks';
 import Header from '../../src/components/common/Header';
-
-// Simulated saved articles (first 3 from mock data)
-const SAVED_ARTICLES = ARTICLES.slice(0, 3);
 
 const SETTINGS_ITEMS = [
   { icon: 'notifications-none', label: 'Notifications', subtitle: 'Push alerts in simple language' },
@@ -26,6 +24,7 @@ const SETTINGS_ITEMS = [
 
 export default function ProfileScreen() {
   const insets = useSafeAreaInsets();
+  const { bookmarks, loading: bookmarksLoading } = useBookmarks();
 
   return (
     <View style={styles.container}>
@@ -53,9 +52,13 @@ export default function ProfileScreen() {
             <Text style={styles.sectionTitle}>Saved Articles</Text>
           </View>
 
-          {SAVED_ARTICLES.length > 0 ? (
+          {bookmarksLoading ? (
+            <View style={styles.emptyState}>
+              <ActivityIndicator size="small" color={Colors.primary} />
+            </View>
+          ) : bookmarks.length > 0 ? (
             <View style={styles.savedList}>
-              {SAVED_ARTICLES.map((article) => (
+              {bookmarks.map((article) => (
                 <TouchableOpacity
                   key={article.id}
                   style={styles.savedItem}

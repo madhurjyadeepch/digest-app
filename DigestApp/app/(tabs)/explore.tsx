@@ -1,16 +1,25 @@
 import React from 'react';
-import { View, Text, ScrollView, StyleSheet, Dimensions } from 'react-native';
+import {
+  View,
+  Text,
+  ScrollView,
+  StyleSheet,
+  ActivityIndicator,
+} from 'react-native';
 import { Colors, Spacing } from '../../src/constants/theme';
 import { CATEGORIES } from '../../src/constants/mockData';
+import { useTrending } from '../../src/hooks/useNews';
 import Header from '../../src/components/common/Header';
 import CategoryCard from '../../src/components/explore/CategoryCard';
 import TrendingCard from '../../src/components/explore/TrendingCard';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-const { width: SCREEN_WIDTH } = Dimensions.get('window');
-
 export default function ExploreScreen() {
   const insets = useSafeAreaInsets();
+  const { trending, loading } = useTrending(1);
+
+  // Use the first trending article for the hero card
+  const trendingArticle = trending.length > 0 ? trending[0] : null;
 
   return (
     <View style={styles.container}>
@@ -31,11 +40,23 @@ export default function ExploreScreen() {
 
         {/* Trending Card */}
         <View style={styles.trendingSection}>
-          <TrendingCard
-            title="THE QUANTUM LEAP IN NEURAL ARCHITECTURE"
-            readTime="8 Min Read"
-            imageUrl="https://images.unsplash.com/photo-1451187580459-43490279c0fa?w=800"
-          />
+          {loading ? (
+            <View style={styles.trendingLoading}>
+              <ActivityIndicator size="small" color={Colors.primary} />
+            </View>
+          ) : trendingArticle ? (
+            <TrendingCard
+              title={trendingArticle.title.toUpperCase()}
+              readTime={trendingArticle.readTime}
+              imageUrl={trendingArticle.imageUrl}
+            />
+          ) : (
+            <TrendingCard
+              title="EXPLORE THE LATEST STORIES"
+              readTime="Browse"
+              imageUrl="https://images.unsplash.com/photo-1451187580459-43490279c0fa?w=800"
+            />
+          )}
         </View>
 
         {/* Category Grid */}
@@ -80,6 +101,13 @@ const styles = StyleSheet.create({
   },
   trendingSection: {
     marginBottom: 8,
+  },
+  trendingLoading: {
+    height: 200,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: Colors.surfaceContainer,
+    borderRadius: 24,
   },
   grid: {
     flexDirection: 'row',
