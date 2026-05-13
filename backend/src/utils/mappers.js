@@ -201,11 +201,11 @@ function buildFullContent(mainText, description) {
   }
 
   if (mainText) {
-    // Split by double newlines or periods followed by newlines for paragraphs
+    // Split by newlines (single or double) to handle various article formats
     const paragraphs = mainText
-      .split(/\n\n+/)
+      .split(/\n+/)
       .map((p) => p.trim())
-      .filter((p) => p.length > 20);
+      .filter((p) => p.length > 10);
 
     paragraphs.forEach((para, i) => {
       // Detect quoted text (starts with " or ')

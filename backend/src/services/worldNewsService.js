@@ -20,13 +20,27 @@ class WorldNewsService {
       baseURL: WORLD_NEWS_BASE_URL,
       timeout: 15000,
     });
+    // Circuit breaker: disable after 402 quota exceeded
+    this._quotaExhausted = false;
+    this._quotaExhaustedAt = null;
   }
 
   /**
-   * Check if the service is configured.
+   * Check if the service is configured AND has remaining quota.
    */
   isAvailable() {
-    return !!this.apiKey;
+    if (!this.apiKey) return false;
+    if (this._quotaExhausted) {
+      // Auto-reset after 1 hour (quota might refresh)
+      if (this._quotaExhaustedAt && Date.now() - this._quotaExhaustedAt > 60 * 60 * 1000) {
+        this._quotaExhausted = false;
+        this._quotaExhaustedAt = null;
+        console.log('[WorldNews] Quota circuit breaker reset — retrying');
+        return true;
+      }
+      return false;
+    }
+    return true;
   }
 
   /**
@@ -263,7 +277,9 @@ class WorldNewsService {
       );
 
       if (status === 402) {
-        console.error('[WorldNews] API quota exceeded — falling back to other sources');
+        console.error('[WorldNews] API quota exceeded — disabling until reset');
+        this._quotaExhausted = true;
+        this._quotaExhaustedAt = Date.now();
       }
       if (status === 401) {
         console.error('[WorldNews] Invalid API key');

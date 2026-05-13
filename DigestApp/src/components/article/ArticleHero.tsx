@@ -34,7 +34,7 @@ export default function ArticleHero({ article }: ArticleHeroProps) {
             {article.category.toUpperCase()}
           </Text>
         </View>
-        <Text style={styles.title} numberOfLines={3}>
+        <Text style={styles.title}>
           {article.title}
         </Text>
         <View style={styles.authorRow}>

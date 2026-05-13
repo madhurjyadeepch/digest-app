@@ -47,13 +47,15 @@ class DigestAPI {
    */
   private async request<T>(
     endpoint: string,
-    options: RequestInit = {}
+    options: RequestInit = {},
+    customTimeout?: number
   ): Promise<ApiResponse<T>> {
     const url = `${this.baseUrl}${endpoint}`;
 
     // AbortController for timeout
     const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), this.timeout);
+    const timeoutMs = customTimeout || this.timeout;
+    const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
 
     try {
       const response = await fetch(url, {
@@ -216,6 +218,7 @@ class DigestAPI {
     article: { title: string; content: string; category: string },
     chatHistory: { role: string; content: string }[] = []
   ): Promise<{ answer: string; isRelevant: boolean }> {
+    // AI requests need a much longer timeout (45s) since model inference takes time
     const response = await this.request<{ answer: string; isRelevant: boolean }>(
       '/chat',
       {
@@ -227,7 +230,8 @@ class DigestAPI {
           articleCategory: article.category,
           chatHistory,
         }),
-      }
+      },
+      45000 // 45s timeout for AI
     );
     return response.data;
   }

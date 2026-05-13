@@ -9,7 +9,7 @@ import {
   Platform,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { useLocalSearchParams } from 'expo-router';
+import { useLocalSearchParams, useRouter } from 'expo-router';
 import { MaterialIcons } from '@expo/vector-icons';
 import { Colors, Spacing, BorderRadius } from '../../src/constants/theme';
 import { useNews } from '../../src/hooks/useNews';
@@ -41,6 +41,7 @@ interface ChatMsg {
 export default function AIScreen() {
   const insets = useSafeAreaInsets();
   const params = useLocalSearchParams<{ articleData?: string }>();
+  const router = useRouter();
   const scrollRef = useRef<ScrollView>(null);
 
   // Get article context — prefer passed article, fallback to first feed article
@@ -169,6 +170,15 @@ export default function AIScreen() {
               title={contextArticle.title}
               subtitle={`${contextArticle.category} · ${contextArticle.readTime}`}
               imageUrl={contextArticle.imageUrl}
+              onViewArticle={() => {
+                router.push({
+                  pathname: '/article/[id]' as any,
+                  params: {
+                    id: contextArticle.id,
+                    articleData: JSON.stringify(contextArticle),
+                  },
+                });
+              }}
             />
           ) : (
             <ArticleContext
