@@ -16,13 +16,6 @@ interface UseNewsReturn {
   error: string | null;
   refreshing: boolean;
   loadingMore: boolean;
-  meta: {
-    source?: string;
-    fromCache?: boolean;
-    total?: number;
-    hasMore?: boolean;
-    responseTime?: string;
-  };
   refresh: () => Promise<void>;
   loadMore: () => Promise<void>;
   hasMore: boolean;
@@ -39,7 +32,7 @@ export function useNews({
   const [loadingMore, setLoadingMore] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [hasMore, setHasMore] = useState(true);
-  const [meta, setMeta] = useState<any>({});
+
   const pageRef = useRef(1);
   const fetchingRef = useRef(false);
 
@@ -66,7 +59,7 @@ export function useNews({
         });
 
         const newArticles = result.articles || [];
-        const serverHasMore = result.meta?.hasMore ?? newArticles.length >= limit;
+        const serverHasMore = result.hasMore ?? newArticles.length >= limit;
 
         if (mode === 'more' && pageNum > 1) {
           // Append, de-duplicate by ID
@@ -80,7 +73,7 @@ export function useNews({
           setArticles(newArticles);
         }
 
-        setMeta(result.meta || {});
+
         setHasMore(serverHasMore);
         pageRef.current = pageNum;
       } catch (err: any) {
@@ -125,7 +118,6 @@ export function useNews({
     error,
     refreshing,
     loadingMore,
-    meta,
     refresh,
     loadMore,
     hasMore,

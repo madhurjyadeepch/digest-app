@@ -8,10 +8,9 @@ process.on("uncaughtException", (err) => {
 
 const app = require("./app");
 
-const DB = process.env.DATABASE.replace(
-  "<PASSWORD>",
-  process.env.DATABASE_PASSWORD
-);
+const DB = process.env.DATABASE_PASSWORD
+  ? process.env.DATABASE.replace("<PASSWORD>", process.env.DATABASE_PASSWORD)
+  : process.env.DATABASE;
 
 // dotenv.config({ path: './config.env' });
 mongoose.connect(DB).then((con) => {
@@ -21,8 +20,8 @@ mongoose.connect(DB).then((con) => {
 
 const PORT = process.env.PORT; //|| 8000;
 
-const server = app.listen(PORT, () => {
-  console.log(`App running' on port ${PORT}...`);
+const server = app.listen(PORT, "0.0.0.0", () => {
+  console.log(`App running on port ${PORT}...`);
 });
 
 process.on("unhandledRejection", (err) => {

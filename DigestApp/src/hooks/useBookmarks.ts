@@ -27,11 +27,12 @@ export function useBookmarks(userId?: string): UseBookmarksReturn {
     try {
       setLoading(true);
       setError(null);
+      // api.getBookmarks already extracts .article from each bookmark
       const data = await api.getBookmarks(uid);
       setBookmarks(data);
     } catch (err: any) {
-      // Don't show error for empty bookmarks or Firebase not configured
-      if (!err.message?.includes('503')) {
+      // Don't show error for empty bookmarks or server not configured
+      if (!err.message?.includes('500') && !err.message?.includes('503')) {
         setError(err.message || 'Failed to fetch bookmarks');
       }
     } finally {

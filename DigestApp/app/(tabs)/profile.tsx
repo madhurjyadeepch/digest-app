@@ -7,11 +7,13 @@ import {
   StyleSheet,
   TouchableOpacity,
   ActivityIndicator,
+  Alert,
 } from 'react-native';
 import { MaterialIcons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Colors, Spacing, BorderRadius } from '../../src/constants/theme';
 import { useBookmarks } from '../../src/hooks/useBookmarks';
+import { useAuth } from '../../src/services/authContext';
 import Header from '../../src/components/common/Header';
 
 const SETTINGS_ITEMS = [
@@ -24,7 +26,25 @@ const SETTINGS_ITEMS = [
 
 export default function ProfileScreen() {
   const insets = useSafeAreaInsets();
-  const { bookmarks, loading: bookmarksLoading } = useBookmarks();
+  const { user, logout } = useAuth();
+  const { bookmarks, loading: bookmarksLoading } = useBookmarks(user?._id);
+
+  const userInitial = (user?.displayName?.[0] || user?.email?.[0] || 'U').toUpperCase();
+  const userName = user?.displayName || 'Reader';
+  const userEmail = user?.email || '';
+
+  const handleSignOut = () => {
+    Alert.alert('Sign Out', 'Are you sure you want to sign out?', [
+      { text: 'Cancel', style: 'cancel' },
+      {
+        text: 'Sign Out',
+        style: 'destructive',
+        onPress: async () => {
+          await logout();
+        },
+      },
+    ]);
+  };
 
   return (
     <View style={styles.container}>
@@ -39,10 +59,10 @@ export default function ProfileScreen() {
         {/* Profile Header */}
         <View style={styles.profileSection}>
           <View style={styles.avatarContainer}>
-            <Text style={styles.avatarText}>M</Text>
+            <Text style={styles.avatarText}>{userInitial}</Text>
           </View>
-          <Text style={styles.name}>Reader</Text>
-          <Text style={styles.email}>digest@reader.com</Text>
+          <Text style={styles.name}>{userName}</Text>
+          <Text style={styles.email}>{userEmail}</Text>
         </View>
 
         {/* Saved Articles Section */}
@@ -71,13 +91,13 @@ export default function ProfileScreen() {
                   />
                   <View style={styles.savedTextSection}>
                     <Text style={styles.savedCategory}>
-                      {article.category.toUpperCase()}
+                      {article.category?.toUpperCase()}
                     </Text>
                     <Text style={styles.savedTitle} numberOfLines={2}>
                       {article.title}
                     </Text>
                     <Text style={styles.savedMeta}>
-                      {article.author.name} • {article.readTime}
+                      {article.author?.name || 'Staff'} • {article.readTime}
                     </Text>
                   </View>
                   <TouchableOpacity hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}>
@@ -133,7 +153,11 @@ export default function ProfileScreen() {
         </View>
 
         {/* Sign Out */}
-        <TouchableOpacity style={styles.signOutButton} activeOpacity={0.7}>
+        <TouchableOpacity
+          style={styles.signOutButton}
+          activeOpacity={0.7}
+          onPress={handleSignOut}
+        >
           <Text style={styles.signOutText}>Sign Out</Text>
         </TouchableOpacity>
 

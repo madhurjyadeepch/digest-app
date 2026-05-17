@@ -5,10 +5,9 @@ const OPENROUTER_API_URL = 'https://openrouter.ai/api/v1/chat/completions';
 
 // Model fallback chain (all free-tier)
 const MODEL_CHAIN = [
-  'nvidia/nemotron-ultra-253b:free',
-  'google/gemma-3-27b-it:free',
-  'mistralai/mistral-small-3.2-24b-instruct:free',
-  'meta-llama/llama-4-maverick:free',
+  'google/gemini-2.5-flash:free',
+  'meta-llama/llama-3.3-70b-instruct:free',
+  'qwen/qwen-2-72b-instruct:free'
 ];
 
 /**
