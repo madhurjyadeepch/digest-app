@@ -6,12 +6,13 @@ import { StatusBar } from 'expo-status-bar';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { StyleSheet, ActivityIndicator, View } from 'react-native';
 import { AuthProvider, useAuth } from '../src/services/authContext';
+import { BookmarkProvider } from '../src/services/bookmarkContext';
 
 // Prevent the splash screen from auto-hiding
 SplashScreen.preventAutoHideAsync();
 
 function RootLayoutNav() {
-  const { isAuthenticated, isLoading } = useAuth();
+  const { isAuthenticated, isLoading, user } = useAuth();
   const segments = useSegments();
   const router = useRouter();
 
@@ -39,7 +40,7 @@ function RootLayoutNav() {
   }
 
   return (
-    <>
+    <BookmarkProvider userId={user?._id}>
       <StatusBar style="light" />
       <Stack
         screenOptions={{
@@ -70,8 +71,16 @@ function RootLayoutNav() {
             presentation: 'card',
           }}
         />
+        <Stack.Screen
+          name="saved-articles"
+          options={{
+            headerShown: false,
+            animation: 'slide_from_right',
+            presentation: 'card',
+          }}
+        />
       </Stack>
-    </>
+    </BookmarkProvider>
   );
 }
 

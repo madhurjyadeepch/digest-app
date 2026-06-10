@@ -13,9 +13,11 @@ import { useRouter } from 'expo-router';
 import { MaterialIcons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Colors, Spacing, BorderRadius } from '../../src/constants/theme';
-import { useBookmarks } from '../../src/hooks/useBookmarks';
+import { useSharedBookmarks } from '../../src/services/bookmarkContext';
 import { useAuth } from '../../src/services/authContext';
 import Header from '../../src/components/common/Header';
+
+const MAX_PROFILE_BOOKMARKS = 3;
 
 const SETTINGS_ITEMS = [
   { icon: 'notifications-none', label: 'Notifications', subtitle: 'Push alerts in simple language' },
@@ -29,11 +31,15 @@ export default function ProfileScreen() {
   const insets = useSafeAreaInsets();
   const router = useRouter();
   const { user, logout } = useAuth();
-  const { bookmarks, loading: bookmarksLoading, toggleBookmark } = useBookmarks(user?._id);
+  const { bookmarks, loading: bookmarksLoading, removeBookmark } = useSharedBookmarks();
 
   const userInitial = (user?.displayName?.[0] || user?.email?.[0] || 'U').toUpperCase();
   const userName = user?.displayName || 'Reader';
   const userEmail = user?.email || '';
+
+  // Show only the latest 3 bookmarks on profile
+  const previewBookmarks = bookmarks.slice(0, MAX_PROFILE_BOOKMARKS);
+  const hasMoreBookmarks = bookmarks.length > MAX_PROFILE_BOOKMARKS;
 
   const handleSignOut = () => {
     Alert.alert('Sign Out', 'Are you sure you want to sign out?', [
@@ -70,17 +76,29 @@ export default function ProfileScreen() {
         {/* Saved Articles Section */}
         <View style={styles.savedSection}>
           <View style={styles.sectionHeader}>
-            <MaterialIcons name="bookmark" size={20} color={Colors.primary} />
-            <Text style={styles.sectionTitle}>Saved Articles</Text>
+            <View style={styles.sectionHeaderLeft}>
+              <MaterialIcons name="bookmark" size={20} color={Colors.primary} />
+              <Text style={styles.sectionTitle}>Saved Articles</Text>
+            </View>
+            {bookmarks.length > 0 && (
+              <TouchableOpacity
+                onPress={() => router.push('/saved-articles' as any)}
+                activeOpacity={0.7}
+                style={styles.viewAllButton}
+              >
+                <Text style={styles.viewAllText}>VIEW ALL</Text>
+                <MaterialIcons name="chevron-right" size={16} color={Colors.primary} />
+              </TouchableOpacity>
+            )}
           </View>
 
           {bookmarksLoading ? (
             <View style={styles.emptyState}>
               <ActivityIndicator size="small" color={Colors.primary} />
             </View>
-          ) : bookmarks.length > 0 ? (
+          ) : previewBookmarks.length > 0 ? (
             <View style={styles.savedList}>
-              {bookmarks.map((article) => (
+              {previewBookmarks.map((article) => (
                 <TouchableOpacity
                   key={article.id}
                   style={styles.savedItem}
@@ -110,7 +128,7 @@ export default function ProfileScreen() {
                   </View>
                   <TouchableOpacity
                     hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
-                    onPress={() => toggleBookmark(article)}
+                    onPress={() => removeBookmark(article.id)}
                   >
                     <MaterialIcons
                       name="bookmark"
@@ -120,6 +138,23 @@ export default function ProfileScreen() {
                   </TouchableOpacity>
                 </TouchableOpacity>
               ))}
+
+              {/* "View All" card when there are more than 3 */}
+              {hasMoreBookmarks && (
+                <TouchableOpacity
+                  style={styles.viewAllCard}
+                  activeOpacity={0.7}
+                  onPress={() => router.push('/saved-articles' as any)}
+                >
+                  <View style={styles.viewAllCardIcon}>
+                    <MaterialIcons name="collections-bookmark" size={20} color={Colors.primary} />
+                  </View>
+                  <Text style={styles.viewAllCardText}>
+                    View all {bookmarks.length} saved articles
+                  </Text>
+                  <MaterialIcons name="arrow-forward" size={18} color={Colors.outlineVariant} />
+                </TouchableOpacity>
+              )}
             </View>
           ) : (
             <View style={styles.emptyState}>
@@ -224,13 +259,29 @@ const styles = StyleSheet.create({
   sectionHeader: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 8,
+    justifyContent: 'space-between',
     marginBottom: 16,
+  },
+  sectionHeaderLeft: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
   },
   sectionTitle: {
     fontFamily: 'PlusJakartaSans-Bold',
     fontSize: 18,
     color: Colors.onSurface,
+  },
+  viewAllButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 2,
+  },
+  viewAllText: {
+    fontFamily: 'PlusJakartaSans-Bold',
+    fontSize: 11,
+    letterSpacing: 1.5,
+    color: Colors.primary,
   },
   savedList: {
     gap: 12,
@@ -270,6 +321,31 @@ const styles = StyleSheet.create({
     fontFamily: 'PlusJakartaSans-Regular',
     fontSize: 11,
     color: Colors.onSurfaceVariant,
+  },
+  viewAllCard: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: Colors.surfaceContainer,
+    borderRadius: BorderRadius.xl,
+    paddingVertical: 16,
+    paddingHorizontal: 16,
+    gap: 12,
+    borderWidth: 1,
+    borderColor: 'rgba(255,141,135,0.12)',
+  },
+  viewAllCardIcon: {
+    width: 40,
+    height: 40,
+    borderRadius: 12,
+    backgroundColor: 'rgba(255,141,135,0.1)',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  viewAllCardText: {
+    flex: 1,
+    fontFamily: 'PlusJakartaSans-SemiBold',
+    fontSize: 14,
+    color: Colors.onSurface,
   },
 
   // Settings

@@ -69,10 +69,10 @@ export default function FeedCard({ article, index, onDoubleTap }: FeedCardProps)
         // Detect double-tap on touch start
         const now = Date.now();
         if (now - lastTapRef.current < DOUBLE_TAP_DELAY) {
-          // Double tap detected
+          // Double tap detected — save article
           if (onDoubleTap) {
-            onDoubleTap(article);
             triggerSaveAnimation();
+            onDoubleTap(article);
           }
           lastTapRef.current = 0; // Reset
           return false; // Don't capture for swipe
@@ -234,7 +234,11 @@ export default function FeedCard({ article, index, onDoubleTap }: FeedCardProps)
                 },
               ]}
             >
-              <MaterialIcons name="bookmark" size={52} color="#fff" />
+              <MaterialIcons
+                name="bookmark"
+                size={52}
+                color="#fff"
+              />
               <Text style={styles.saveIndicatorText}>SAVED</Text>
             </Animated.View>
           )}

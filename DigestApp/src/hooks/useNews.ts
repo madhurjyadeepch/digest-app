@@ -132,17 +132,63 @@ interface UseTrendingReturn {
   error: string | null;
 }
 
+// Module-level cache: trending data persists across component mounts
+// and is prefetched eagerly so the Explore tab loads instantly.
+let _trendingCache: Article[] | null = null;
+let _trendingPromise: Promise<void> | null = null;
+
+function prefetchTrending(limit: number = 5): Promise<void> {
+  if (_trendingPromise) return _trendingPromise;
+  _trendingPromise = (async () => {
+    try {
+      const articles = await api.getTrending(limit);
+      _trendingCache = articles;
+    } catch {
+      // Silently fail — the hook will retry on mount
+    } finally {
+      _trendingPromise = null;
+    }
+  })();
+  return _trendingPromise;
+}
+
+// Kick off prefetch immediately when this module loads (app boot).
+// By the time the user taps Explore, trending data is already ready.
+prefetchTrending();
+
 export function useTrending(limit: number = 5): UseTrendingReturn {
-  const [trending, setTrending] = useState<Article[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [trending, setTrending] = useState<Article[]>(_trendingCache || []);
+  const [loading, setLoading] = useState(!_trendingCache);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
+    // If cache is already populated, use it immediately
+    if (_trendingCache) {
+      setTrending(_trendingCache);
+      setLoading(false);
+      return;
+    }
+
+    // Otherwise wait for the prefetch or fetch fresh
     let cancelled = false;
     (async () => {
       try {
         setLoading(true);
+        // Wait for any in-flight prefetch first
+        if (_trendingPromise) {
+          await _trendingPromise;
+        }
+        // If prefetch populated the cache, use it
+        if (_trendingCache) {
+          if (!cancelled) {
+            setTrending(_trendingCache);
+            setLoading(false);
+          }
+          return;
+        }
+        // Fallback: fetch fresh
         const articles = await api.getTrending(limit);
+        _trendingCache = articles;
         if (!cancelled) setTrending(articles);
       } catch (err: any) {
         if (!cancelled) setError(err.message || 'Failed to fetch trending');

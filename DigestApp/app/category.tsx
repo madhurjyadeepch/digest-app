@@ -14,8 +14,7 @@ import { MaterialIcons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Colors, Spacing, BorderRadius } from '../src/constants/theme';
 import { useNews } from '../src/hooks/useNews';
-import { useBookmarks } from '../src/hooks/useBookmarks';
-import { useAuth } from '../src/services/authContext';
+import { useSharedBookmarks } from '../src/services/bookmarkContext';
 import FeedCard from '../src/components/feed/FeedCard';
 import { Article } from '../src/types';
 
@@ -44,14 +43,13 @@ export default function CategoryScreen() {
 
   const { articles, loading, error, refreshing, loadingMore, refresh, loadMore, hasMore } =
     useNews({ category: backendCategory, limit: 10 });
-  const { user } = useAuth();
-  const { toggleBookmark } = useBookmarks(user?._id);
+  const { saveBookmark } = useSharedBookmarks();
 
   const handleDoubleTap = useCallback(
     (article: Article) => {
-      toggleBookmark(article);
+      saveBookmark(article);
     },
-    [toggleBookmark]
+    [saveBookmark]
   );
 
   const renderItem = useCallback(

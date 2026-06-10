@@ -4,7 +4,7 @@ import { Article } from '../types';
 // ─── Configuration ──────────────────────────────────
 // For physical devices on the same WiFi, use the machine's LAN IP.
 // For Android emulator only, use 10.0.2.2 instead.
-const LAN_IP = '192.168.1.6';
+const LAN_IP = '10.67.111.221';
 
 const getDevBaseUrl = () => {
   // LAN IP works for physical devices (Android & iOS) and iOS Simulator
@@ -251,25 +251,28 @@ class DigestAPI {
     return response.data?.categories || [];
   }
 
-  // ─── Bookmark Endpoints ─────────────────────────────
-
   /**
    * Get bookmarks for a user.
-   * Backend returns: { success, data: { bookmarks } }
-   * Each bookmark has an embedded `.article` object.
+   * Backend returns: { success, data: [ { bookmarkId, ...articleFields, savedAt } ] }
    */
   async getBookmarks(userId: string): Promise<Article[]> {
     try {
-      const response = await this.request<{ bookmarks: any[] }>(
+      const response = await this.request<any>(
         `/user/bookmarks?userId=${userId}`
       );
-      const bookmarks = response.data?.bookmarks || [];
-      // Extract the embedded article from each bookmark
-      return bookmarks.map((b: any) => ({
-        ...b.article,
-        // Ensure the id field is present (MongoDB uses _id internally)
-        id: b.article?.id || b.articleId,
-      }));
+      // Backend returns data as a flat array of bookmark entries
+      // Each entry has bookmarkId + article fields spread in + savedAt
+      const entries = Array.isArray(response.data) ? response.data : [];
+      return entries.map((entry: any) => {
+        const { bookmarkId, savedAt, ...articleFields } = entry;
+        return {
+          ...articleFields,
+          // Ensure the id field is present
+          id: articleFields.id || entry.articleId,
+          // Preserve the bookmarkId for deletion
+          bookmarkId,
+        };
+      });
     } catch {
       return [];
     }

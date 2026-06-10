@@ -51,6 +51,15 @@ export default function ExploreScreen() {
               title={trendingArticle.title.toUpperCase()}
               readTime={trendingArticle.readTime}
               imageUrl={trendingArticle.imageUrl}
+              onPress={() => {
+                router.push({
+                  pathname: '/article/[id]' as any,
+                  params: {
+                    id: trendingArticle.id,
+                    articleData: JSON.stringify(trendingArticle),
+                  },
+                });
+              }}
             />
           ) : (
             <TrendingCard

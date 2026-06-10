@@ -11,8 +11,7 @@ import {
 } from 'react-native';
 import { Colors } from '../../src/constants/theme';
 import { useNews } from '../../src/hooks/useNews';
-import { useBookmarks } from '../../src/hooks/useBookmarks';
-import { useAuth } from '../../src/services/authContext';
+import { useSharedBookmarks } from '../../src/services/bookmarkContext';
 import FeedCard from '../../src/components/feed/FeedCard';
 import Header from '../../src/components/common/Header';
 import { Article } from '../../src/types';
@@ -23,14 +22,13 @@ export default function HomeScreen() {
   const flatListRef = useRef<FlatList>(null);
   const { articles, loading, error, refreshing, loadingMore, refresh, loadMore, hasMore } =
     useNews({ limit: 10 });
-  const { user } = useAuth();
-  const { toggleBookmark } = useBookmarks(user?._id);
+  const { saveBookmark } = useSharedBookmarks();
 
   const handleDoubleTap = useCallback(
     (article: Article) => {
-      toggleBookmark(article);
+      saveBookmark(article);
     },
-    [toggleBookmark]
+    [saveBookmark]
   );
 
   const renderItem = useCallback(
