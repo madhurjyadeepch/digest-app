@@ -18,11 +18,13 @@ mongoose.connect(DB).then((con) => {
   console.log("DB connection is successful!");
 });
 
-const PORT = process.env.PORT; //|| 8000;
 
-const server = app.listen(PORT, "0.0.0.0", () => {
+if(process.env.NODE_ENV !== 'production') {
+  const PORT = process.env.PORT; //|| 8000;
+  const server = app.listen(PORT, "0.0.0.0", () => {
   console.log(`App running on port ${PORT}...`);
 });
+}
 
 process.on("unhandledRejection", (err) => {
   console.log(err.name, ":", err.message);
@@ -30,3 +32,5 @@ process.on("unhandledRejection", (err) => {
     process.exit(1);
   });
 });
+
+module.exports = app;
