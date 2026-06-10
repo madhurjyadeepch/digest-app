@@ -4,16 +4,14 @@ import { Article } from '../types';
 // ─── Configuration ──────────────────────────────────
 // For physical devices on the same WiFi, use the machine's LAN IP.
 // For Android emulator only, use 10.0.2.2 instead.
-const LAN_IP = '10.67.111.221';
+const LAN_IP = '192.168.1.6';
 
 const getDevBaseUrl = () => {
   // LAN IP works for physical devices (Android & iOS) and iOS Simulator
   return `http://${LAN_IP}:3001/api`;
 };
 
-const BASE_URL = __DEV__
-  ? getDevBaseUrl()
-  : 'https://your-production-url.com/api';
+const BASE_URL = 'https://digest-app-six.vercel.app/api/';
 
 // ─── Types ──────────────────────────────────────────
 interface ApiResponse<T> {

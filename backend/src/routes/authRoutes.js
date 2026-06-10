@@ -9,11 +9,11 @@ const { authMiddleware } = require('../middleware/auth');
  * Register a new user with email/password via Firebase Auth.
  * Note: In a mobile app, registration usually happens client-side
  * with Firebase SDK. This endpoint is for creating the Firestore
- * user profile after client-side registration.
+ * user profile after client-side registration.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                             
  *
  * Body: { uid, email, displayName }
  */
-router.post('/register', async (req, res, next) => {
+router.post('/register', async (req, res, next) => {                                                                                                                                                                                                                      
   if (!isFirebaseAvailable()) {
     return res.status(503).json({
       success: false,
