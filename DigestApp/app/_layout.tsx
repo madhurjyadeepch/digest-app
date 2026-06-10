@@ -62,6 +62,14 @@ function RootLayoutNav() {
             presentation: 'card',
           }}
         />
+        <Stack.Screen
+          name="category"
+          options={{
+            headerShown: false,
+            animation: 'slide_from_right',
+            presentation: 'card',
+          }}
+        />
       </Stack>
     </>
   );

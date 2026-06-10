@@ -9,6 +9,7 @@ import {
   ActivityIndicator,
   Alert,
 } from 'react-native';
+import { useRouter } from 'expo-router';
 import { MaterialIcons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Colors, Spacing, BorderRadius } from '../../src/constants/theme';
@@ -26,8 +27,9 @@ const SETTINGS_ITEMS = [
 
 export default function ProfileScreen() {
   const insets = useSafeAreaInsets();
+  const router = useRouter();
   const { user, logout } = useAuth();
-  const { bookmarks, loading: bookmarksLoading } = useBookmarks(user?._id);
+  const { bookmarks, loading: bookmarksLoading, toggleBookmark } = useBookmarks(user?._id);
 
   const userInitial = (user?.displayName?.[0] || user?.email?.[0] || 'U').toUpperCase();
   const userName = user?.displayName || 'Reader';
@@ -83,6 +85,12 @@ export default function ProfileScreen() {
                   key={article.id}
                   style={styles.savedItem}
                   activeOpacity={0.7}
+                  onPress={() => {
+                    router.push({
+                      pathname: '/article/[id]' as any,
+                      params: { id: article.id, articleData: JSON.stringify(article) },
+                    });
+                  }}
                 >
                   <Image
                     source={{ uri: article.imageUrl }}
@@ -100,7 +108,10 @@ export default function ProfileScreen() {
                       {article.author?.name || 'Staff'} • {article.readTime}
                     </Text>
                   </View>
-                  <TouchableOpacity hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}>
+                  <TouchableOpacity
+                    hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+                    onPress={() => toggleBookmark(article)}
+                  >
                     <MaterialIcons
                       name="bookmark"
                       size={20}
@@ -115,7 +126,7 @@ export default function ProfileScreen() {
               <MaterialIcons name="bookmark-outline" size={48} color={Colors.outlineVariant} />
               <Text style={styles.emptyText}>No saved articles yet</Text>
               <Text style={styles.emptySubtext}>
-                Bookmark articles from the feed to read later
+                Double-tap any article to save it for later
               </Text>
             </View>
           )}

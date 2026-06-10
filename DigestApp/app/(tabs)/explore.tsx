@@ -6,6 +6,7 @@ import {
   StyleSheet,
   ActivityIndicator,
 } from 'react-native';
+import { useRouter } from 'expo-router';
 import { Colors, Spacing } from '../../src/constants/theme';
 import { CATEGORIES } from '../../src/constants/mockData';
 import { useTrending } from '../../src/hooks/useNews';
@@ -16,6 +17,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 export default function ExploreScreen() {
   const insets = useSafeAreaInsets();
+  const router = useRouter();
   const { trending, loading } = useTrending(1);
 
   // Use the first trending article for the hero card
@@ -62,7 +64,16 @@ export default function ExploreScreen() {
         {/* Category Grid */}
         <View style={styles.grid}>
           {CATEGORIES.map((category) => (
-            <CategoryCard key={category.id} category={category} />
+            <CategoryCard
+              key={category.id}
+              category={category}
+              onPress={() => {
+                router.push({
+                  pathname: '/category' as any,
+                  params: { id: category.id, name: category.name },
+                });
+              }}
+            />
           ))}
         </View>
 

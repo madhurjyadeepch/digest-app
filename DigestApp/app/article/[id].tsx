@@ -198,7 +198,7 @@ export default function ArticleScreen() {
             <Text style={styles.footerLink}>CONTACT</Text>
           </View>
           <Text style={styles.footerCopy}>
-            © 2024 Digest Editorial. All rights reserved.
+            © {new Date().getFullYear()} Digest Editorial. All rights reserved.
           </Text>
         </View>
       </ScrollView>

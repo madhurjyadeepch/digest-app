@@ -4,7 +4,7 @@ import { Article } from '../types';
 // ─── Configuration ──────────────────────────────────
 // For physical devices on the same WiFi, use the machine's LAN IP.
 // For Android emulator only, use 10.0.2.2 instead.
-const LAN_IP = '192.168.1.2';
+const LAN_IP = '192.168.1.6';
 
 const getDevBaseUrl = () => {
   // LAN IP works for physical devices (Android & iOS) and iOS Simulator

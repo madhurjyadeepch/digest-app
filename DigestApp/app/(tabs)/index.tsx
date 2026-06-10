@@ -11,6 +11,8 @@ import {
 } from 'react-native';
 import { Colors } from '../../src/constants/theme';
 import { useNews } from '../../src/hooks/useNews';
+import { useBookmarks } from '../../src/hooks/useBookmarks';
+import { useAuth } from '../../src/services/authContext';
 import FeedCard from '../../src/components/feed/FeedCard';
 import Header from '../../src/components/common/Header';
 import { Article } from '../../src/types';
@@ -21,12 +23,21 @@ export default function HomeScreen() {
   const flatListRef = useRef<FlatList>(null);
   const { articles, loading, error, refreshing, loadingMore, refresh, loadMore, hasMore } =
     useNews({ limit: 10 });
+  const { user } = useAuth();
+  const { toggleBookmark } = useBookmarks(user?._id);
+
+  const handleDoubleTap = useCallback(
+    (article: Article) => {
+      toggleBookmark(article);
+    },
+    [toggleBookmark]
+  );
 
   const renderItem = useCallback(
     ({ item, index }: { item: Article; index: number }) => (
-      <FeedCard article={item} index={index} />
+      <FeedCard article={item} index={index} onDoubleTap={handleDoubleTap} />
     ),
-    []
+    [handleDoubleTap]
   );
 
   const keyExtractor = useCallback((item: Article) => item.id, []);

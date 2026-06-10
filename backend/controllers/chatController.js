@@ -1,64 +1,50 @@
 const AppError = require('../utils/appError');
 const catchAsync = require('../utils/catchAsync');
 
-const OPENROUTER_API_URL = 'https://openrouter.ai/api/v1/chat/completions';
-
-// Model fallback chain (all free-tier)
-const MODEL_CHAIN = [
-  'google/gemini-2.5-flash:free',
-  'meta-llama/llama-3.3-70b-instruct:free',
-  'qwen/qwen-2-72b-instruct:free'
-];
+const GROQ_API_URL = 'https://api.groq.com/openai/v1/chat/completions';
+const MODEL = 'openai/gpt-oss-120b';
 
 /**
- * Strips <think>...</think> blocks some free models expose in their output.
+ * Strips <think>...</think> blocks some models expose in their output.
  */
 function cleanThinkingOutput(text) {
   return text.replace(/<think>[\s\S]*?<\/think>/gi, '').trim();
 }
 
 /**
- * Attempts OpenRouter completion with automatic model fallback.
+ * Calls the Groq API with the given messages and system prompt.
  */
-async function fetchWithFallback(messages, systemPrompt) {
-  let lastError;
-
-  for (const model of MODEL_CHAIN) {
-    try {
-      const response = await fetch(OPENROUTER_API_URL, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${process.env.OPENROUTER_API_KEY}`,
-          'HTTP-Referer': process.env.APP_REFERER || 'https://digest.app',
-          'X-Title': 'Digest',
-        },
-        body: JSON.stringify({
-          model,
-          messages: [
-            { role: 'system', content: systemPrompt },
-            ...messages,
-          ],
-          max_tokens: 1024,
-          temperature: 0.7,
-        }),
-      });
-
-      if (!response.ok) {
-        const err = await response.text();
-        throw new Error(`OpenRouter ${response.status}: ${err}`);
-      }
-
-      const data = await response.json();
-      const raw = data.choices?.[0]?.message?.content || '';
-      return { answer: cleanThinkingOutput(raw), model };
-    } catch (err) {
-      lastError = err;
-      // Try next model in chain
-    }
+async function fetchFromGroq(messages, systemPrompt) {
+  const apiKey = process.env.GROQ_API_KEY;
+  if (!apiKey) {
+    throw new Error('GROQ_API_KEY is not set in environment variables.');
   }
 
-  throw lastError || new Error('All AI models failed.');
+  const response = await fetch(GROQ_API_URL, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      Authorization: `Bearer ${apiKey}`,
+    },
+    body: JSON.stringify({
+      model: MODEL,
+      messages: [
+        { role: 'system', content: systemPrompt },
+        ...messages,
+      ],
+      max_tokens: 1024,
+      temperature: 0.7,
+    }),
+  });
+
+  if (!response.ok) {
+    const err = await response.text();
+    throw new Error(`Groq API ${response.status}: ${err}`);
+  }
+
+  const data = await response.json();
+  const raw = data.choices?.[0]?.message?.content || '';
+  return { answer: cleanThinkingOutput(raw) };
 }
 
 // POST /api/chat
@@ -96,7 +82,7 @@ Do NOT include any internal reasoning, "<think>" tags, or meta-commentary in you
     { role: 'user', content: question },
   ];
 
-  const { answer } = await fetchWithFallback(messages, systemPrompt);
+  const { answer } = await fetchFromGroq(messages, systemPrompt);
 
   const isOffTopic = answer.includes('[OFF_TOPIC]');
 

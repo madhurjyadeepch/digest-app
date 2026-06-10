@@ -1,4 +1,4 @@
-import React, { useRef } from 'react';
+import React, { useRef, useCallback, useState } from 'react';
 import {
   View,
   Text,
@@ -16,20 +16,70 @@ import { MaterialIcons } from '@expo/vector-icons';
 
 const { height: SCREEN_HEIGHT, width: SCREEN_WIDTH } = Dimensions.get('window');
 const SWIPE_THRESHOLD = 80;
+const DOUBLE_TAP_DELAY = 300;
 
 interface FeedCardProps {
   article: Article;
   index: number;
+  onDoubleTap?: (article: Article) => void;
 }
 
-export default function FeedCard({ article, index }: FeedCardProps) {
+export default function FeedCard({ article, index, onDoubleTap }: FeedCardProps) {
   const router = useRouter();
 
   const translateX = useRef(new Animated.Value(0)).current;
   const hasNavigated = useRef(false);
 
+  // Double-tap detection
+  const lastTapRef = useRef<number>(0);
+
+  // Save animation
+  const [showSaveIndicator, setShowSaveIndicator] = useState(false);
+  const saveScale = useRef(new Animated.Value(0)).current;
+  const saveOpacity = useRef(new Animated.Value(0)).current;
+
+  const triggerSaveAnimation = useCallback(() => {
+    setShowSaveIndicator(true);
+    saveScale.setValue(0);
+    saveOpacity.setValue(1);
+
+    Animated.parallel([
+      Animated.spring(saveScale, {
+        toValue: 1,
+        tension: 80,
+        friction: 6,
+        useNativeDriver: true,
+      }),
+      Animated.sequence([
+        Animated.delay(600),
+        Animated.timing(saveOpacity, {
+          toValue: 0,
+          duration: 300,
+          useNativeDriver: true,
+        }),
+      ]),
+    ]).start(() => {
+      setShowSaveIndicator(false);
+    });
+  }, [saveScale, saveOpacity]);
+
   const panResponder = useRef(
     PanResponder.create({
+      onStartShouldSetPanResponder: () => {
+        // Detect double-tap on touch start
+        const now = Date.now();
+        if (now - lastTapRef.current < DOUBLE_TAP_DELAY) {
+          // Double tap detected
+          if (onDoubleTap) {
+            onDoubleTap(article);
+            triggerSaveAnimation();
+          }
+          lastTapRef.current = 0; // Reset
+          return false; // Don't capture for swipe
+        }
+        lastTapRef.current = now;
+        return false;
+      },
       onMoveShouldSetPanResponder: (_, gestureState) => {
         // Only respond to horizontal swipes (not vertical scrolling)
         return (
@@ -145,7 +195,7 @@ export default function FeedCard({ article, index }: FeedCardProps) {
             style={StyleSheet.absoluteFillObject}
           />
 
-          {/* Category Label */}
+          {/* Title Section — always shows full title */}
           <View style={styles.topSection}>
             <Text style={styles.category}>
               {article.category}
@@ -155,9 +205,9 @@ export default function FeedCard({ article, index }: FeedCardProps) {
             </Text>
           </View>
 
-          {/* Summary + Swipe Hints */}
+          {/* Summary + Swipe Hints — clips if title is long */}
           <View style={styles.bottomSection}>
-            <Text style={styles.summary}>
+            <Text style={styles.summary} numberOfLines={3}>
               {article.summary}
             </Text>
 
@@ -173,7 +223,21 @@ export default function FeedCard({ article, index }: FeedCardProps) {
             </View>
           </View>
 
-
+          {/* Double-tap save indicator */}
+          {showSaveIndicator && (
+            <Animated.View
+              style={[
+                styles.saveIndicator,
+                {
+                  opacity: saveOpacity,
+                  transform: [{ scale: saveScale }],
+                },
+              ]}
+            >
+              <MaterialIcons name="bookmark" size={52} color="#fff" />
+              <Text style={styles.saveIndicatorText}>SAVED</Text>
+            </Animated.View>
+          )}
         </View>
       </Animated.View>
     </View>
@@ -224,6 +288,7 @@ const styles = StyleSheet.create({
   topSection: {
     zIndex: 10,
     marginTop: 8,
+    flexShrink: 0,
   },
   category: {
     fontFamily: 'PlusJakartaSans-Bold',
@@ -245,6 +310,8 @@ const styles = StyleSheet.create({
   },
   bottomSection: {
     zIndex: 10,
+    flexShrink: 1,
+    overflow: 'hidden',
   },
   summary: {
     fontFamily: 'PlusJakartaSans-Medium',
@@ -277,5 +344,24 @@ const styles = StyleSheet.create({
     textTransform: 'uppercase',
     color: 'rgba(255,255,255,0.9)',
   },
-
+  saveIndicator: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    alignItems: 'center',
+    justifyContent: 'center',
+    zIndex: 20,
+  },
+  saveIndicatorText: {
+    fontFamily: 'PlusJakartaSans-ExtraBold',
+    fontSize: 14,
+    letterSpacing: 4,
+    color: '#fff',
+    marginTop: 8,
+    textShadowColor: 'rgba(0,0,0,0.6)',
+    textShadowOffset: { width: 0, height: 2 },
+    textShadowRadius: 8,
+  },
 });
